@@ -17,17 +17,15 @@ limitations under the License.
 package controller
 
 import (
+	kantetaskv1 "codereliant.io/entrytask/api/v1"
 	"context"
 	"fmt"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-	"time"
-
-	kantetaskv1 "codereliant.io/entrytask/api/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // EntryTaskReconciler reconciles a EntryTask object
@@ -83,6 +81,7 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	desiredPodCount := entryTask.Spec.DesiredReplicas
 	currentPodCount := int32(len(podList.Items))
 
+	fmt.Println("currentPodCount: ", currentPodCount)
 	for currentPodCount < desiredPodCount {
 		log.Info("currentPodCount < desiredPodCount, create new pod", "desiredPodCount", desiredPodCount, "currentPodCount", currentPodCount)
 		// 创建新 Pod 的代码示例
@@ -91,6 +90,9 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				Name:      fmt.Sprintf("%s-pod-%d", entryTask.Name, podCount), // 为新 Pod 生成唯一名称
 				Namespace: req.Namespace,
 				Labels:    entryTask.Spec.Selector.MatchLabels, // 设置 Pod 的标签
+				OwnerReferences: []metav1.OwnerReference{
+					*metav1.NewControllerRef(entryTask, kantetaskv1.GroupVersion.WithKind("EntryTask")),
+				},
 			},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
@@ -110,7 +112,7 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		podCount++
 		currentPodCount++
 		// debug 延缓pod的创建速度
-		time.Sleep(1 * time.Second)
+		//time.Sleep(1 * time.Second)
 		log.Info("Created new Pod", "Pod.Name", newPod.Name)
 	}
 
