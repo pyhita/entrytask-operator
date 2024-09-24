@@ -28,7 +28,7 @@ import (
 type EntryTaskSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	DesiredReplicas int32                 `json:"desired_replicas"`
+	DesiredReplicas int                   `json:"desired_replicas"`
 	Image           string                `json:"image"`
 	Selector        *metav1.LabelSelector `json:"selector"`
 	// +kubebuilder:pruning:PreserveUnknownFields

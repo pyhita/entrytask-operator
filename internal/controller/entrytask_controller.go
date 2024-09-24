@@ -18,7 +18,9 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	kantetaskv1 "codereliant.io/entrytask/api/v1"
@@ -46,6 +48,9 @@ type EntryTaskReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.0/pkg/reconcile
+
+var podCount int = 0
+
 func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
@@ -57,8 +62,52 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "unable to fetch EntryTask", "namespace", req.Namespace, "name", req.Name)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	log.Info("Find kante Entrytask")
-	// fetch all the pods that selector
+
+	// 使用选择器获取相关的 Pods
+	selector, err := metav1.LabelSelectorAsSelector(entryTask.Spec.Selector)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// 创建一个 Pod 列表
+	podList := &v1.PodList{}
+	// 获取指定命名空间下的 Pods
+	if err := r.List(ctx, podList, &client.ListOptions{
+		Namespace:     req.Namespace, // 指定命名空间
+		LabelSelector: selector,      // 使用选择器
+	}); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	desiredPodCount := entryTask.Spec.DesiredReplicas
+	currentPodCount := len(podList.Items)
+
+	for currentPodCount < desiredPodCount {
+		log.Info("currentPodCount < desiredPodCount, create new pod", "desiredPodCount", desiredPodCount, "currentPodCount", currentPodCount)
+		// 创建新 Pod 的代码示例
+		newPod := &v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-pod-%d", entryTask.Name, podCount), // 为新 Pod 生成唯一名称
+				Namespace: req.Namespace,
+				Labels:    entryTask.Spec.Selector.MatchLabels, // 设置 Pod 的标签
+			},
+			Spec: v1.PodSpec{
+				Containers: []v1.Container{
+					{
+						Name:  entryTask.Spec.Template.Spec.Containers[0].Name,  // 替换为实际的容器名称
+						Image: entryTask.Spec.Template.Spec.Containers[0].Image, // 替换为实际的镜像
+					},
+				},
+			},
+		}
+
+		// 创建 Pod
+		if err := r.Create(ctx, newPod); err != nil {
+			log.Error(err, "Failed to create Pod")
+			return ctrl.Result{}, err
+		}
+		log.Info("Created new Pod", "Pod.Name", newPod.Name)
+	}
 
 	return ctrl.Result{}, nil
 }
