@@ -80,7 +80,7 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	desiredPodCount := entryTask.Spec.DesiredReplicas
-	currentPodCount := len(podList.Items)
+	currentPodCount := int32(len(podList.Items))
 
 	for currentPodCount < desiredPodCount {
 		log.Info("currentPodCount < desiredPodCount, create new pod", "desiredPodCount", desiredPodCount, "currentPodCount", currentPodCount)
