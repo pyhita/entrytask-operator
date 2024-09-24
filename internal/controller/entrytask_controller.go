@@ -22,6 +22,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"time"
 
 	kantetaskv1 "codereliant.io/entrytask/api/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -94,8 +95,8 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{
-						Name:  entryTask.Spec.Template.Spec.Containers[0].Name,  // 替换为实际的容器名称
-						Image: entryTask.Spec.Template.Spec.Containers[0].Image, // 替换为实际的镜像
+						Name:  entryTask.Spec.Template.Spec.Containers[0].Name,
+						Image: entryTask.Spec.Template.Spec.Containers[0].Image,
 					},
 				},
 			},
@@ -107,6 +108,9 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			return ctrl.Result{}, err
 		}
 		podCount++
+		currentPodCount++
+		// debug 延缓pod的创建速度
+		time.Sleep(1 * time.Second)
 		log.Info("Created new Pod", "Pod.Name", newPod.Name)
 	}
 
