@@ -1,0 +1,23 @@
+# permissions for end users to view entrytasks.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: entrytask-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: entrytask-viewer-role
+rules:
+- apiGroups:
+  - kantetask.codereliant.io
+  resources:
+  - entrytasks
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kantetask.codereliant.io
+  resources:
+  - entrytasks/status
+  verbs:
+  - get

@@ -1,0 +1,27 @@
+# permissions for end users to edit entrytasks.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: entrytask-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: entrytask-editor-role
+rules:
+- apiGroups:
+  - kantetask.codereliant.io
+  resources:
+  - entrytasks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kantetask.codereliant.io
+  resources:
+  - entrytasks/status
+  verbs:
+  - get

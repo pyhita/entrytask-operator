@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- kantetask_v1_entrytask.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples
