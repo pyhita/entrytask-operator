@@ -106,6 +106,7 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			log.Error(err, "Failed to create Pod")
 			return ctrl.Result{}, err
 		}
+		podCount++
 		log.Info("Created new Pod", "Pod.Name", newPod.Name)
 	}
 
