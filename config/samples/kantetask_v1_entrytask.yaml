@@ -7,3 +7,18 @@ metadata:
   name: entrytask-sample
 spec:
   # TODO(user): Add fields here
+  desired_replicas: 3
+  image: nginx:1.14.2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.14.2
+          ports:
+            - containerPort: 80
