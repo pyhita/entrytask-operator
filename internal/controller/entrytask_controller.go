@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	kantetaskv1 "codereliant.io/entrytask/api/v1"
@@ -65,12 +64,12 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *EntryTaskReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	//return ctrl.NewControllerManagedBy(mgr).
-	//	For(&kantetaskv1.EntryTask{}).
-	//	Complete(r)
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&kantetaskv1.EntryTask{}).
+		Complete(r)
 
 	// 如果集群中 有pod 发生了变化，触发 调谐逻辑
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1.Pod{}).
-		Complete(r)
+	//return ctrl.NewControllerManagedBy(mgr).
+	//	For(&v1.Pod{}).
+	//	Complete(r)
 }
