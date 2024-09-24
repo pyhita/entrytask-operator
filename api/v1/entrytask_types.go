@@ -31,7 +31,9 @@ type EntryTaskSpec struct {
 	DesiredReplicas int32                 `json:"desired_replicas"`
 	Image           string                `json:"image"`
 	Selector        *metav1.LabelSelector `json:"selector"`
-	Template        v1.PodTemplateSpec    `json:"template"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Schemaless
+	Template v1.PodTemplateSpec `json:"template"`
 }
 
 // EntryTaskStatus defines the observed state of EntryTask
@@ -44,7 +46,6 @@ type EntryTaskStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-
 // EntryTask is the Schema for the entrytasks API
 type EntryTask struct {
 	metav1.TypeMeta   `json:",inline"`
