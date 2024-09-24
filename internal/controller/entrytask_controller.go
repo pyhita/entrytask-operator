@@ -54,7 +54,7 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	entryTask := &kantetaskv1.EntryTask{}
 	if err := r.Get(ctx, req.NamespacedName, entryTask); err != nil {
 		// can not find entrytask
-		log.Error(err, "unable to fetch EntryTask")
+		log.Error(err, "unable to fetch EntryTask", "namespace", req.Namespace, "name", req.Name)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	log.Info("Find kante Entrytask")
