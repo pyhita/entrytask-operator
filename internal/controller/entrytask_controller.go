@@ -57,7 +57,6 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	log.Info("Find kante Entrytask")
-
 	// fetch all the pods that selector
 
 	return ctrl.Result{}, nil

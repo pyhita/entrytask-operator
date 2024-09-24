@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -30,13 +31,14 @@ type EntryTaskSpec struct {
 	DesiredReplicas int32                 `json:"desired_replicas"`
 	Image           string                `json:"image"`
 	Selector        *metav1.LabelSelector `json:"selector"`
+	Template        v1.PodTemplateSpec    `json:"template"`
 }
 
 // EntryTaskStatus defines the observed state of EntryTask
 type EntryTaskStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	ActualReplicas int32    `json:"actual_replicas"`
+	ActualReplicas int32    `json:"actualReplicas"`
 	Endpoints      []string `json:"endpoints"`
 }
 
