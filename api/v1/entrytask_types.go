@@ -27,11 +27,14 @@ import (
 type EntryTaskSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	DesiredReplicas int32                 `json:"desiredReplicas"`
-	ContainerImage  string                `json:"containerImage"`
-	ContainerName   string                `json:"containerName"`
-	ContainerPort   int32                 `json:"containerPort"`
-	Selector        *metav1.LabelSelector `json:"selector"`
+	DesiredReplicas int32  `json:"desiredReplicas"`
+	Image           string `json:"image"`
+	Name            string `json:"name"`
+	Port            int32  `json:"port"`
+	//ContainerImage  string                `json:"containerImage"`
+	//ContainerName   string                `json:"containerName"`
+	//ContainerPort   int32                 `json:"containerPort"`
+	Selector *metav1.LabelSelector `json:"selector"`
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
 	//Template v1.PodTemplateSpec `json:"template"`
