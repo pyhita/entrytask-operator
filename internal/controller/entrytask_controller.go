@@ -78,25 +78,23 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	if len(podList.Items) == 0 {
-	}
 	// ensure service
-	//if err := r.ensureService(ctx, entryTask, entryTask.Name+"-service", podList.Items[0]); err != nil {
-	//	log.Error(err, "unable to ensure Service")
-	//	return ctrl.Result{}, err
-	//}
-	//
-	//// update entrytask status with current state
-	//entryTask.Status.ActualReplicas = int32(len(podList.Items))
-	//endpoints := make([]string, len(podList.Items))
-	//for _, pod := range podList.Items {
-	//	endpoints = append(endpoints, fmt.Sprintf("%s:%d", pod.Status.PodIP, pod.Spec.Containers[0].Ports[0].ContainerPort))
-	//}
-	//entryTask.Status.Endpoints = endpoints
-	//if err := r.Status().Update(ctx, entryTask); err != nil {
-	//	log.Error(err, "unable to update EntryTask status")
-	//	return ctrl.Result{}, err
-	//}
+	if err := r.ensureService(ctx, entryTask, entryTask.Name+"-service", podList.Items[0]); err != nil {
+		log.Error(err, "unable to ensure Service")
+		return ctrl.Result{}, err
+	}
+
+	// update entrytask status with current state
+	entryTask.Status.ActualReplicas = int32(len(podList.Items))
+	endpoints := make([]string, len(podList.Items))
+	for _, pod := range podList.Items {
+		endpoints = append(endpoints, fmt.Sprintf("%s:%d", pod.Status.PodIP, pod.Spec.Containers[0].Ports[0].ContainerPort))
+	}
+	entryTask.Status.Endpoints = endpoints
+	if err := r.Status().Update(ctx, entryTask); err != nil {
+		log.Error(err, "unable to update EntryTask status")
+		return ctrl.Result{}, err
+	}
 	log.Info("Successfully reconciled EntryTask")
 
 	return ctrl.Result{}, nil
@@ -139,9 +137,9 @@ func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kanteta
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{
-						Name:  entryTask.Spec.ContaninerName,
+						Name:  entryTask.Spec.ContainerName,
 						Image: entryTask.Spec.ContainerImage,
-						// Ports: []v1.ContainerPort{{ContainerPort: containerPort}},
+						Ports: []v1.ContainerPort{{ContainerPort: containerPort}},
 					},
 				},
 			},
