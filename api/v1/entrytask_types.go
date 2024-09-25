@@ -27,7 +27,7 @@ import (
 type EntryTaskSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	DesiredReplicas int32                 `json:"desired_replicas"`
+	DesiredReplicas int32                 `json:"desiredReplicas"`
 	ContainerImage  string                `json:"containerImage"`
 	ContainerName   string                `json:"contaninerName"`
 	ContainerPort   int32                 `json:"containerPort"`
