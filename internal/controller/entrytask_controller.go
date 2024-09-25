@@ -164,6 +164,10 @@ func (r *EntryTaskReconciler) ensureService(ctx context.Context, entryTask *kant
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      serviceName,
 					Namespace: entryTask.Namespace,
+					Labels:    entryTask.Spec.Selector.MatchLabels,
+					OwnerReferences: []metav1.OwnerReference{
+						*metav1.NewControllerRef(entryTask, kantetaskv1.GroupVersion.WithKind("EntryTask")),
+					},
 				},
 				Spec: v1.ServiceSpec{
 					Selector: entryTask.Spec.Selector.MatchLabels,
