@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: entrytask-operator
+spec:
+  project: entrytask-operator
+  source:
+    path: deploy/
+    repoURL: 'https://github.com/pyhita/entrytask-operator.git'
+    targetRevision: HEAD
+  destination:
+    namespace: default
+    server: 'https://kubernetes.default.svc'
+
