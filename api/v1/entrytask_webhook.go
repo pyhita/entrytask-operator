@@ -27,7 +27,7 @@ import (
 )
 
 type EntryTaskValidator struct {
-	client.Client
+	client client.Client
 }
 
 // log is for logging in this package.
@@ -37,7 +37,7 @@ var log = logf.Log.WithName("entrytask-resource")
 func (r *EntryTask) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	// add validator
 	validator := &EntryTaskValidator{
-		mgr.GetClient(),
+		client: mgr.GetClient(),
 	}
 
 	return ctrl.NewWebhookManagedBy(mgr).
