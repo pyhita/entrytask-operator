@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -54,9 +55,8 @@ type EntryTaskReconciler struct {
 var podCount int = 0
 
 const (
-	containerPort = 80
-	targetPort
-	port
+	port          = 80
+	finalizerName = "entrytask.coderliant.io/finalizer"
 )
 
 func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -97,6 +97,34 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	log.Info("Successfully reconciled EntryTask")
 
+	// check if entrytask is deleted
+	if entryTask.DeletionTimestamp != nil {
+		if controllerutil.ContainsFinalizer(entryTask, finalizerName) {
+			// clean up resources
+			log.Info("Finalizer found, clean up resources")
+			if err := r.deleteResources(ctx, entryTask); err != nil {
+				log.Error(err, "Failed to delete resources")
+				return ctrl.Result{}, err
+			}
+
+			// remove finalizer
+			controllerutil.RemoveFinalizer(entryTask, finalizerName)
+			if err := r.Update(ctx, entryTask); err != nil {
+				log.Error(err, "Failed to remove finalizer")
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		// not deleted, add finalizer
+		if !controllerutil.ContainsFinalizer(entryTask, finalizerName) {
+			entryTask.ObjectMeta.Finalizers = append(entryTask.ObjectMeta.Finalizers, finalizerName)
+			if err := r.Update(ctx, entryTask); err != nil {
+				log.Error(err, "Failed to add finalizer")
+				return ctrl.Result{}, err
+			}
+		}
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -122,13 +150,13 @@ func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kanteta
 	desiredPodCount := entryTask.Spec.DesiredReplicas
 	currentPodCount := int32(len(podList.Items))
 
-	log.Info("log pod count: ", "currentPodCount", currentPodCount)
-	log.Info("container info: ", "containerName", entryTask.Spec.Name, "containerPort", entryTask.Spec.Port, "containerImage", entryTask.Spec.Image, "desiredReplicas", entryTask.Spec.DesiredReplicas)
+	//log.Info("log pod count: ", "currentPodCount", currentPodCount)
+	//log.Info("container info: ", "containerName", entryTask.Spec.Name, "containerPort", entryTask.Spec.Port, "containerImage", entryTask.Spec.Image, "desiredReplicas", entryTask.Spec.DesiredReplicas)
 	for currentPodCount < desiredPodCount {
 		log.Info("currentPodCount < desiredPodCount, create new pod", "desiredPodCount", desiredPodCount, "currentPodCount", currentPodCount)
 		newPod := &v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-pod-%s", entryTask.Name, uuid.NewUUID()), // 为新 Pod 生成唯一名称
+				Name:      fmt.Sprintf("entryatsk-pod-%s", uuid.NewUUID()), // 为新 Pod 生成唯一名称
 				Namespace: Namespace,
 				Labels:    entryTask.Spec.Selector.MatchLabels, // 设置 Pod 的标签
 				OwnerReferences: []metav1.OwnerReference{
@@ -201,6 +229,30 @@ func (r *EntryTaskReconciler) ensureService(ctx context.Context, entryTask *kant
 	} else {
 		// service already exists
 		log.Info("Service already exists", "service", serviceName)
+	}
+
+	return nil
+}
+
+func (r *EntryTaskReconciler) deleteResources(ctx context.Context, entryTask *kantetaskv1.EntryTask) error {
+	log := log.FromContext(ctx)
+
+	deleteOptions := []client.DeleteAllOfOption{
+		client.InNamespace(entryTask.Namespace),
+		client.MatchingLabels(entryTask.Labels),
+	}
+
+	// delete all the pods
+	pod := &v1.Pod{}
+	if err := r.DeleteAllOf(ctx, pod, deleteOptions...); err != nil {
+		log.Error(err, "Failed to delete Pod")
+		return err
+	}
+
+	service := &v1.Service{}
+	if err := r.DeleteAllOf(ctx, service, deleteOptions...); err != nil {
+		log.Error(err, "Failed to delete Service")
+		return err
 	}
 
 	return nil
