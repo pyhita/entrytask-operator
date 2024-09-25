@@ -1,5 +1,9 @@
 # Build the manager binary
 FROM golang:1.22 AS builder
+
+# Set the Go proxy
+ENV GOPROXY=https://goproxy.cn,direct
+
 ARG TARGETOS
 ARG TARGETARCH
 
