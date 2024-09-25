@@ -155,7 +155,7 @@ func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kanteta
 		log.Info("currentPodCount < desiredPodCount, create new pod", "desiredPodCount", desiredPodCount, "currentPodCount", currentPodCount)
 		newPod := &v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("entryatsk-pod-%s", uuid.NewUUID()), // 为新 Pod 生成唯一名称
+				Name:      fmt.Sprintf("entrytask-pod-%s", uuid.NewUUID()), // 为新 Pod 生成唯一名称
 				Namespace: Namespace,
 				Labels:    entryTask.Spec.Selector.MatchLabels, // 设置 Pod 的标签
 				OwnerReferences: []metav1.OwnerReference{
