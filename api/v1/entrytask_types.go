@@ -31,6 +31,7 @@ type EntryTaskSpec struct {
 	Image           string `json:"image"`
 	Name            string `json:"name"`
 	Port            int32  `json:"port"`
+	ServicePort     int32  `json:"servicePort"`
 	//ContainerImage  string                `json:"containerImage"`
 	//ContainerName   string                `json:"containerName"`
 	//ContainerPort   int32                 `json:"containerPort"`

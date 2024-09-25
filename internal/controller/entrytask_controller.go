@@ -212,7 +212,7 @@ func (r *EntryTaskReconciler) ensureService(ctx context.Context, entryTask *kant
 					Selector: entryTask.Spec.Selector.MatchLabels,
 					Ports: []v1.ServicePort{{
 						Protocol:   v1.ProtocolTCP,
-						Port:       port,
+						Port:       entryTask.Spec.ServicePort,
 						TargetPort: intstr.FromInt32(pod.Spec.Containers[0].Ports[0].ContainerPort),
 					}},
 				},
