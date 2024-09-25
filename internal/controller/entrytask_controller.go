@@ -139,8 +139,8 @@ func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kanteta
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{
-						Name:  entryTask.Spec.Template.Spec.Containers[0].Name,
-						Image: entryTask.Spec.Template.Spec.Containers[0].Image,
+						Name:  entryTask.Spec.ContaninerName,
+						Image: entryTask.Spec.ContainerImage,
 						// Ports: []v1.ContainerPort{{ContainerPort: containerPort}},
 					},
 				},

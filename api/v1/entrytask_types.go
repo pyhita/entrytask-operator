@@ -17,7 +17,6 @@ limitations under the License.
 package v1
 
 import (
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -29,11 +28,13 @@ type EntryTaskSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	DesiredReplicas int32                 `json:"desired_replicas"`
-	Image           string                `json:"image"`
+	ContainerImage  string                `json:"containerImage"`
+	ContaninerName  string                `json:"contaninerName"`
+	ContainerPort   int32                 `json:"containerPort"`
 	Selector        *metav1.LabelSelector `json:"selector"`
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
-	Template v1.PodTemplateSpec `json:"template"`
+	//Template v1.PodTemplateSpec `json:"template"`
 }
 
 // EntryTaskStatus defines the observed state of EntryTask
