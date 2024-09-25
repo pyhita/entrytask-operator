@@ -11,7 +11,7 @@ spec:
   image: nginx:1.14.2
   name: nginx
   port: 80
-  servicePort: 7000
+  servicePort: 9000
   selector:
     matchLabels:
       app: entrytask
