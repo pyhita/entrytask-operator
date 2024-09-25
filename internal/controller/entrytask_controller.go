@@ -123,6 +123,7 @@ func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kanteta
 	currentPodCount := int32(len(podList.Items))
 
 	log.Info("log pod count: ", "currentPodCount", currentPodCount)
+	log.Info("container info: ", "containerName", entryTask.Spec.ContainerName, "containerPort", entryTask.Spec.ContainerPort, "containerImage", entryTask.Spec.ContainerImage, "desiredReplicas", entryTask.Spec.DesiredReplicas)
 	for currentPodCount < desiredPodCount {
 		log.Info("currentPodCount < desiredPodCount, create new pod", "desiredPodCount", desiredPodCount, "currentPodCount", currentPodCount)
 		newPod := &v1.Pod{
@@ -139,7 +140,7 @@ func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kanteta
 					{
 						Name:  entryTask.Spec.ContainerName,
 						Image: entryTask.Spec.ContainerImage,
-						Ports: []v1.ContainerPort{{ContainerPort: containerPort}},
+						Ports: []v1.ContainerPort{{ContainerPort: entryTask.Spec.ContainerPort}},
 					},
 				},
 			},
