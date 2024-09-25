@@ -21,14 +21,13 @@ import (
 	"fmt"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-type EntryTaskValidator struct {
-	client client.Client
-}
+//type EntryTaskValidator struct {
+//	client client.Client
+//}
 
 // log is for logging in this package.
 var log = logf.Log.WithName("entrytask-resource")
@@ -36,13 +35,13 @@ var log = logf.Log.WithName("entrytask-resource")
 // SetupWebhookWithManager will setup the manager to manage the webhooks
 func (r *EntryTask) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	// add validator
-	validator := &EntryTaskValidator{
-		client: mgr.GetClient(),
-	}
+	//validator := &EntryTaskValidator{
+	//	client: mgr.GetClient(),
+	//}
 
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
-		WithValidator(validator).
+		//WithValidator(validator).
 		Complete()
 }
 
@@ -57,7 +56,7 @@ func (r *EntryTask) SetupWebhookWithManager(mgr ctrl.Manager) error {
 //var _ webhook.Validator = &EntryTask{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *EntryTaskValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (r *EntryTask) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	entrtask, ok := obj.(*EntryTask)
 
 	if !ok {
@@ -77,7 +76,7 @@ func (r *EntryTaskValidator) ValidateCreate(ctx context.Context, obj runtime.Obj
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *EntryTaskValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (r *EntryTask) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
 	entrtask, ok := newObj.(*EntryTask)
 
 	if !ok {
@@ -97,7 +96,7 @@ func (r *EntryTaskValidator) ValidateUpdate(ctx context.Context, oldObj, newObj 
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *EntryTaskValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (r *EntryTask) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil
