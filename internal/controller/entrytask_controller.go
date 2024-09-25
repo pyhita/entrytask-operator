@@ -78,7 +78,7 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// ensure service
-	if err := r.ensureService(ctx, entryTask, entryTask.Namespace); err != nil {
+	if err := r.ensureService(ctx, entryTask, entryTask.Name+"-service"); err != nil {
 		log.Error(err, "unable to ensure Service")
 		return ctrl.Result{}, err
 	}
