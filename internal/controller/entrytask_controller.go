@@ -23,6 +23,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -87,7 +88,7 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		// 创建新 Pod 的代码示例
 		newPod := &v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-pod-%d", entryTask.Name, podCount), // 为新 Pod 生成唯一名称
+				Name:      fmt.Sprintf("%s-pod-%s", entryTask.Name, uuid.NewUUID()), // 为新 Pod 生成唯一名称
 				Namespace: req.Namespace,
 				Labels:    entryTask.Spec.Selector.MatchLabels, // 设置 Pod 的标签
 				OwnerReferences: []metav1.OwnerReference{
@@ -111,9 +112,17 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 		podCount++
 		currentPodCount++
+		// add new pod to podList
+		podList.Items = append(podList.Items, *newPod)
 		// debug 延缓pod的创建速度
 		//time.Sleep(1 * time.Second)
 		log.Info("Created new Pod", "Pod.Name", newPod.Name)
+	}
+
+	// 检查 代理pod的service 有没有启动，如果没有 创建对应的service
+	service := &v1.Service{}
+	if err := r.Get(ctx, req.NamespacedName, service); err != nil {
+		log.Error(err, "unable to fetch Service")
 	}
 
 	return ctrl.Result{}, nil
