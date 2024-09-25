@@ -21,8 +21,10 @@ import (
 	"context"
 	"fmt"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,6 +52,12 @@ type EntryTaskReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.0/pkg/reconcile
 
 var podCount int = 0
+
+const (
+	containerPort = 8080
+	targetPort
+	port = 80
+)
 
 func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
@@ -100,6 +108,7 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 					{
 						Name:  entryTask.Spec.Template.Spec.Containers[0].Name,
 						Image: entryTask.Spec.Template.Spec.Containers[0].Image,
+						Ports: []v1.ContainerPort{{ContainerPort: containerPort}},
 					},
 				},
 			},
@@ -127,6 +136,82 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	return ctrl.Result{}, nil
 }
+
+func (r *EntryTaskReconciler) ensureService(ctx context.Context, entryTask *kantetaskv1.EntryTask, serviceName string) error {
+	log := log.FromContext(ctx)
+	service := &v1.Service{}
+
+	err := r.Get(ctx, client.ObjectKey{Name: serviceName, Namespace: entryTask.Namespace}, service)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// create a new service
+			log.Info("Create new service ", "serviceName", serviceName)
+			service := &v1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      serviceName,
+					Namespace: entryTask.Namespace,
+				},
+				Spec: v1.ServiceSpec{
+					Selector: entryTask.Spec.Selector.MatchLabels,
+					Ports: []v1.ServicePort{{
+						Protocol:   v1.ProtocolTCP,
+						Port:       port,
+						TargetPort: intstr.FromInt32(targetPort),
+					}},
+				},
+			}
+
+			if err := r.Create(ctx, service); err != nil {
+				log.Error(err, "Failed to create new service", "serviceName", serviceName)
+				return err
+			}
+		} else {
+			return err
+		}
+	} else {
+		// service already exists
+		log.Info("Service already exists", "service", serviceName)
+	}
+
+	return nil
+}
+
+//func (r *EntryTaskReconciler) ensureNamespace(ctx context.Context, tenant *.Tenant, namespaceName string) error {
+//	log := log.FromContext(ctx)
+//
+//	namespace := &v1.Namespace{}
+//
+//	err := r.Get(ctx, client.ObjectKey{Name: namespaceName}, namespace)
+//	if err != nil {
+//		// If the namespace doesn't exist, create it
+//		if errors.IsNotFound(err) {
+//			log.Info("Creating Namespace", "namespace", namespaceName)
+//			namespace := &v1.Namespace{
+//				ObjectMeta: metav1.ObjectMeta{
+//					Name: namespaceName,
+//					Annotations: map[string]string{
+//						"adminEmail": tenant.Spec.AdminEmail,
+//						"managed-by": tenantOperatorAnnotation,
+//					},
+//				},
+//			}
+//
+//			// Attempt to create the namespace
+//			if err = r.Create(ctx, namespace); err != nil {
+//				return err
+//			}
+//		} else {
+//			return err
+//		}
+//	} else {
+//		// If the namespace already exists, check for required annotations
+//		log.Info("Namespace already exists", "namespace", namespaceName)
+//
+//		// Logic for checking annotations
+//	}
+//
+//	return nil
+//}
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *EntryTaskReconciler) SetupWithManager(mgr ctrl.Manager) error {
