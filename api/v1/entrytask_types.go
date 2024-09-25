@@ -29,7 +29,7 @@ type EntryTaskSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 	DesiredReplicas int32                 `json:"desiredReplicas"`
 	ContainerImage  string                `json:"containerImage"`
-	ContainerName   string                `json:"contaninerName"`
+	ContainerName   string                `json:"containerName"`
 	ContainerPort   int32                 `json:"containerPort"`
 	Selector        *metav1.LabelSelector `json:"selector"`
 	// +kubebuilder:pruning:PreserveUnknownFields
