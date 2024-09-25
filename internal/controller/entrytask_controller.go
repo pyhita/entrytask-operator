@@ -78,23 +78,25 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
+	if len(podList.Items) == 0 {
+	}
 	// ensure service
-	if err := r.ensureService(ctx, entryTask, entryTask.Name+"-service"); err != nil {
-		log.Error(err, "unable to ensure Service")
-		return ctrl.Result{}, err
-	}
-
-	// update entrytask status with current state
-	entryTask.Status.ActualReplicas = int32(len(podList.Items))
-	endpoints := make([]string, len(podList.Items))
-	for _, pod := range podList.Items {
-		endpoints = append(endpoints, fmt.Sprintf("%s:%d", pod.Status.PodIP, pod.Spec.Containers[0].Ports[0].ContainerPort))
-	}
-	entryTask.Status.Endpoints = endpoints
-	if err := r.Status().Update(ctx, entryTask); err != nil {
-		log.Error(err, "unable to update EntryTask status")
-		return ctrl.Result{}, err
-	}
+	//if err := r.ensureService(ctx, entryTask, entryTask.Name+"-service", podList.Items[0]); err != nil {
+	//	log.Error(err, "unable to ensure Service")
+	//	return ctrl.Result{}, err
+	//}
+	//
+	//// update entrytask status with current state
+	//entryTask.Status.ActualReplicas = int32(len(podList.Items))
+	//endpoints := make([]string, len(podList.Items))
+	//for _, pod := range podList.Items {
+	//	endpoints = append(endpoints, fmt.Sprintf("%s:%d", pod.Status.PodIP, pod.Spec.Containers[0].Ports[0].ContainerPort))
+	//}
+	//entryTask.Status.Endpoints = endpoints
+	//if err := r.Status().Update(ctx, entryTask); err != nil {
+	//	log.Error(err, "unable to update EntryTask status")
+	//	return ctrl.Result{}, err
+	//}
 	log.Info("Successfully reconciled EntryTask")
 
 	return ctrl.Result{}, nil
@@ -125,7 +127,6 @@ func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kanteta
 	log.Info("log pod count: ", "currentPodCount", currentPodCount)
 	for currentPodCount < desiredPodCount {
 		log.Info("currentPodCount < desiredPodCount, create new pod", "desiredPodCount", desiredPodCount, "currentPodCount", currentPodCount)
-		// 创建新 Pod 的代码示例
 		newPod := &v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("%s-pod-%s", entryTask.Name, uuid.NewUUID()), // 为新 Pod 生成唯一名称
@@ -140,7 +141,7 @@ func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kanteta
 					{
 						Name:  entryTask.Spec.Template.Spec.Containers[0].Name,
 						Image: entryTask.Spec.Template.Spec.Containers[0].Image,
-						Ports: []v1.ContainerPort{{ContainerPort: containerPort}},
+						// Ports: []v1.ContainerPort{{ContainerPort: containerPort}},
 					},
 				},
 			},
@@ -163,7 +164,7 @@ func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kanteta
 	return nil, podList
 }
 
-func (r *EntryTaskReconciler) ensureService(ctx context.Context, entryTask *kantetaskv1.EntryTask, serviceName string) error {
+func (r *EntryTaskReconciler) ensureService(ctx context.Context, entryTask *kantetaskv1.EntryTask, serviceName string, pod v1.Pod) error {
 	log := log.FromContext(ctx)
 	service := &v1.Service{}
 
@@ -186,7 +187,7 @@ func (r *EntryTaskReconciler) ensureService(ctx context.Context, entryTask *kant
 					Ports: []v1.ServicePort{{
 						Protocol:   v1.ProtocolTCP,
 						Port:       port,
-						TargetPort: intstr.FromInt32(targetPort),
+						TargetPort: intstr.FromInt32(pod.Spec.Containers[0].Ports[0].ContainerPort),
 					}},
 				},
 			}
