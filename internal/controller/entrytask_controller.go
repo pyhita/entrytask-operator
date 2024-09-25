@@ -71,34 +71,42 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// ensure pods
-	err, podList := r.ensurePods(ctx, entryTask, entryTask.Namespace)
-	if err != nil {
-		log.Error(err, "unable to ensure Pods")
-		return ctrl.Result{}, err
-	}
+	if entryTask.DeletionTimestamp.IsZero() {
+		// not deleted, add finalizer
+		if !controllerutil.ContainsFinalizer(entryTask, finalizerName) {
+			entryTask.ObjectMeta.Finalizers = append(entryTask.ObjectMeta.Finalizers, finalizerName)
+			if err := r.Update(ctx, entryTask); err != nil {
+				log.Error(err, "Failed to add finalizer")
+				return ctrl.Result{}, err
+			}
+		}
 
-	// ensure service
-	if err := r.ensureService(ctx, entryTask, entryTask.Name+"-service", podList.Items[0]); err != nil {
-		log.Error(err, "unable to ensure Service")
-		return ctrl.Result{}, err
-	}
+		// ensure pods
+		err, podList := r.ensurePods(ctx, entryTask, entryTask.Namespace)
+		if err != nil {
+			log.Error(err, "unable to ensure Pods")
+			return ctrl.Result{}, err
+		}
 
-	// update entrytask status with current state
-	entryTask.Status.ActualReplicas = int32(len(podList.Items))
-	endpoints := make([]string, len(podList.Items))
-	for _, pod := range podList.Items {
-		endpoints = append(endpoints, fmt.Sprintf("%s:%d", pod.Status.PodIP, pod.Spec.Containers[0].Ports[0].ContainerPort))
-	}
-	entryTask.Status.Endpoints = endpoints
-	if err := r.Status().Update(ctx, entryTask); err != nil {
-		log.Error(err, "unable to update EntryTask status")
-		return ctrl.Result{}, err
-	}
-	log.Info("Successfully reconciled EntryTask")
+		// ensure service
+		if err := r.ensureService(ctx, entryTask, entryTask.Name+"-service", podList.Items[0]); err != nil {
+			log.Error(err, "unable to ensure Service")
+			return ctrl.Result{}, err
+		}
 
-	// check if entrytask is deleted
-	if entryTask.DeletionTimestamp != nil {
+		// update entrytask status with current state
+		entryTask.Status.ActualReplicas = int32(len(podList.Items))
+		endpoints := make([]string, len(podList.Items))
+		for _, pod := range podList.Items {
+			endpoints = append(endpoints, fmt.Sprintf("%s:%d", pod.Status.PodIP, pod.Spec.Containers[0].Ports[0].ContainerPort))
+		}
+		entryTask.Status.Endpoints = endpoints
+		if err := r.Status().Update(ctx, entryTask); err != nil {
+			log.Error(err, "unable to update EntryTask status")
+			return ctrl.Result{}, err
+		}
+		log.Info("Successfully reconciled EntryTask")
+	} else {
 		if controllerutil.ContainsFinalizer(entryTask, finalizerName) {
 			// clean up resources
 			log.Info("Finalizer found, clean up resources")
@@ -111,15 +119,6 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			controllerutil.RemoveFinalizer(entryTask, finalizerName)
 			if err := r.Update(ctx, entryTask); err != nil {
 				log.Error(err, "Failed to remove finalizer")
-				return ctrl.Result{}, err
-			}
-		}
-	} else {
-		// not deleted, add finalizer
-		if !controllerutil.ContainsFinalizer(entryTask, finalizerName) {
-			entryTask.ObjectMeta.Finalizers = append(entryTask.ObjectMeta.Finalizers, finalizerName)
-			if err := r.Update(ctx, entryTask); err != nil {
-				log.Error(err, "Failed to add finalizer")
 				return ctrl.Result{}, err
 			}
 		}
