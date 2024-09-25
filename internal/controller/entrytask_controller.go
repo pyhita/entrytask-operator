@@ -244,15 +244,18 @@ func (r *EntryTaskReconciler) deleteResources(ctx context.Context, entryTask *ka
 	// delete all the pods
 	pod := &v1.Pod{}
 	if err := r.DeleteAllOf(ctx, pod, deleteOptions...); err != nil {
-		log.Error(err, "Failed to delete Pod")
+		log.Error(err, "Failed to delete pod")
 		return err
 	}
+	log.Info("Deleted all the pods")
 
 	service := &v1.Service{}
 	if err := r.DeleteAllOf(ctx, service, deleteOptions...); err != nil {
-		log.Error(err, "Failed to delete Service")
+		log.Error(err, "Failed to delete service")
 		return err
 	}
+	log.Info("Deleted all the services")
+	log.Info("Deleted all the resources")
 
 	return nil
 }
