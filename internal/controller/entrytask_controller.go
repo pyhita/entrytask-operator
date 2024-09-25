@@ -55,7 +55,7 @@ type EntryTaskReconciler struct {
 var podCount int = 0
 
 const (
-	port          = 80
+	defaultPort   = 8089
 	finalizerName = "entrytask.coderliant.io/finalizer"
 )
 
@@ -199,6 +199,14 @@ func (r *EntryTaskReconciler) ensureService(ctx context.Context, entryTask *kant
 		if errors.IsNotFound(err) {
 			// create a new service
 			log.Info("Create new service ", "serviceName", serviceName)
+
+			servicePort := func() int32 {
+				if entryTask.Spec.ServicePort != 0 {
+					return entryTask.Spec.ServicePort
+				}
+				return defaultPort
+			}()
+
 			service := &v1.Service{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      serviceName,
@@ -212,7 +220,7 @@ func (r *EntryTaskReconciler) ensureService(ctx context.Context, entryTask *kant
 					Selector: entryTask.Spec.Selector.MatchLabels,
 					Ports: []v1.ServicePort{{
 						Protocol:   v1.ProtocolTCP,
-						Port:       entryTask.Spec.ServicePort,
+						Port:       servicePort,
 						TargetPort: intstr.FromInt32(pod.Spec.Containers[0].Ports[0].ContainerPort),
 					}},
 				},
