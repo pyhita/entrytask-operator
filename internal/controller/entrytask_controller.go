@@ -54,9 +54,9 @@ type EntryTaskReconciler struct {
 var podCount int = 0
 
 const (
-	containerPort = 8080
+	containerPort = 80
 	targetPort
-	port = 80
+	port
 )
 
 func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -71,20 +71,40 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// ensure pods
+	if err := r.ensurePods(ctx, entryTask, entryTask.Namespace); err != nil {
+		log.Error(err, "unable to ensure Pods")
+		return ctrl.Result{}, err
+	}
+
+	// ensure service
+	if err := r.ensureService(ctx, entryTask, entryTask.Namespace); err != nil {
+		log.Error(err, "unable to ensure Service")
+		return ctrl.Result{}, err
+	}
+
+	// 维护 status 信息
+
+	return ctrl.Result{}, nil
+}
+
+func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kantetaskv1.EntryTask, Namespace string) error {
+	log := log.FromContext(ctx)
+
 	// 使用选择器获取相关的 Pods
 	selector, err := metav1.LabelSelectorAsSelector(entryTask.Spec.Selector)
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 
 	// 创建一个 Pod 列表
 	podList := &v1.PodList{}
 	// 获取指定命名空间下的 Pods
 	if err := r.List(ctx, podList, &client.ListOptions{
-		Namespace:     req.Namespace, // 指定命名空间
-		LabelSelector: selector,      // 使用选择器
+		Namespace:     Namespace, // 指定命名空间
+		LabelSelector: selector,  // 使用选择器
 	}); err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 
 	desiredPodCount := entryTask.Spec.DesiredReplicas
@@ -97,7 +117,7 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		newPod := &v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("%s-pod-%s", entryTask.Name, uuid.NewUUID()), // 为新 Pod 生成唯一名称
-				Namespace: req.Namespace,
+				Namespace: Namespace,
 				Labels:    entryTask.Spec.Selector.MatchLabels, // 设置 Pod 的标签
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(entryTask, kantetaskv1.GroupVersion.WithKind("EntryTask")),
@@ -117,7 +137,7 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		// 创建 Pod
 		if err := r.Create(ctx, newPod); err != nil {
 			log.Error(err, "Failed to create Pod")
-			return ctrl.Result{}, err
+			return err
 		}
 		podCount++
 		currentPodCount++
@@ -128,13 +148,7 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Info("Created new Pod", "Pod.Name", newPod.Name)
 	}
 
-	// 检查 代理pod的service 有没有启动，如果没有 创建对应的service
-	service := &v1.Service{}
-	if err := r.Get(ctx, req.NamespacedName, service); err != nil {
-		log.Error(err, "unable to fetch Service")
-	}
-
-	return ctrl.Result{}, nil
+	return nil
 }
 
 func (r *EntryTaskReconciler) ensureService(ctx context.Context, entryTask *kantetaskv1.EntryTask, serviceName string) error {
@@ -229,5 +243,6 @@ func (r *EntryTaskReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kantetaskv1.EntryTask{}).
 		Owns(&v1.Pod{}).
+		Owns(&v1.Service{}).
 		Complete(r)
 }
