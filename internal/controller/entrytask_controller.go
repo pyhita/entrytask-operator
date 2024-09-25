@@ -95,6 +95,7 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "unable to update EntryTask status")
 		return ctrl.Result{}, err
 	}
+	log.Info("Successfully reconciled EntryTask")
 
 	return ctrl.Result{}, nil
 }
