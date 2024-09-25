@@ -72,7 +72,8 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// ensure pods
-	if err := r.ensurePods(ctx, entryTask, entryTask.Namespace); err != nil {
+	err, podList := r.ensurePods(ctx, entryTask, entryTask.Namespace)
+	if err != nil {
 		log.Error(err, "unable to ensure Pods")
 		return ctrl.Result{}, err
 	}
@@ -83,18 +84,28 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	// 维护 status 信息
+	// update entrytask status with current state
+	entryTask.Status.ActualReplicas = int32(len(podList.Items))
+	endpoints := make([]string, len(podList.Items))
+	for _, pod := range podList.Items {
+		endpoints = append(endpoints, fmt.Sprintf("%s:%d", pod.Status.PodIP, pod.Spec.Containers[0].Ports[0].ContainerPort))
+	}
+	entryTask.Status.Endpoints = endpoints
+	if err := r.Status().Update(ctx, entryTask); err != nil {
+		log.Error(err, "unable to update EntryTask status")
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
 
-func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kantetaskv1.EntryTask, Namespace string) error {
+func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kantetaskv1.EntryTask, Namespace string) (error, *v1.PodList) {
 	log := log.FromContext(ctx)
 
 	// 使用选择器获取相关的 Pods
 	selector, err := metav1.LabelSelectorAsSelector(entryTask.Spec.Selector)
 	if err != nil {
-		return err
+		return err, nil
 	}
 
 	// 创建一个 Pod 列表
@@ -104,7 +115,7 @@ func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kanteta
 		Namespace:     Namespace, // 指定命名空间
 		LabelSelector: selector,  // 使用选择器
 	}); err != nil {
-		return err
+		return err, nil
 	}
 
 	desiredPodCount := entryTask.Spec.DesiredReplicas
@@ -137,7 +148,7 @@ func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kanteta
 		// 创建 Pod
 		if err := r.Create(ctx, newPod); err != nil {
 			log.Error(err, "Failed to create Pod")
-			return err
+			return err, podList
 		}
 		podCount++
 		currentPodCount++
@@ -148,7 +159,7 @@ func (r *EntryTaskReconciler) ensurePods(ctx context.Context, entryTask *kanteta
 		log.Info("Created new Pod", "Pod.Name", newPod.Name)
 	}
 
-	return nil
+	return nil, podList
 }
 
 func (r *EntryTaskReconciler) ensureService(ctx context.Context, entryTask *kantetaskv1.EntryTask, serviceName string) error {
