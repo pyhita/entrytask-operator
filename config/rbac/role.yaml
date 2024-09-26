@@ -7,9 +7,16 @@ rules:
 - apiGroups:
     - ""
   resources:
-    - "*"
+    - pods
+    - services
   verbs:
-    - "*"
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
 - apiGroups:
   - kantetask.codereliant.io
   resources:
