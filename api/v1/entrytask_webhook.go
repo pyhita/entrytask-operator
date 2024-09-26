@@ -22,12 +22,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-//type EntryTaskValidator struct {
-//	client client.Client
-//}
+// +kubebuilder:webhook:path=/validate-kantetask-codereliant-io-v1-entrytask,mutating=false,failurePolicy=fail,sideEffects=None,groups=kantetask.codereliant.io,resources=entrytasks,verbs=create;update,versions=v1,name=ventrytask.kb.io,admissionReviewVersions=v1
+// +kubebuilder:object:generate=false
+type EntryTaskValidator struct {
+}
 
 // log is for logging in this package.
 var log = logf.Log.WithName("entrytask-resource")
@@ -35,13 +37,9 @@ var log = logf.Log.WithName("entrytask-resource")
 // SetupWebhookWithManager will setup the manager to manage the webhooks
 func (r *EntryTask) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	// add validator
-	//validator := &EntryTaskValidator{
-	//	client: mgr.GetClient(),
-	//}
-
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
-		//WithValidator(validator).
+		WithValidator(&EntryTaskValidator{}).
 		Complete()
 }
 
@@ -51,12 +49,10 @@ func (r *EntryTask) SetupWebhookWithManager(mgr ctrl.Manager) error {
 // NOTE: The 'path' attribute must follow a specific pattern and should not be modified directly here.
 // Modifying the path for an invalid path can cause API server errors; failing to locate the webhook.
 
-// +kubebuilder:webhook:path=/validate-kantetask-codereliant-io-v1-entrytask,mutating=false,failurePolicy=fail,sideEffects=None,groups=kantetask.codereliant.io,resources=entrytasks,verbs=create;update,versions=v1,name=ventrytask.kb.io,admissionReviewVersions=v1
-
-//var _ webhook.Validator = &EntryTask{}
+var _ webhook.CustomValidator = &EntryTaskValidator{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *EntryTask) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (r *EntryTaskValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	entrtask, ok := obj.(*EntryTask)
 
 	if !ok {
@@ -76,7 +72,7 @@ func (r *EntryTask) ValidateCreate(ctx context.Context, obj runtime.Object) (adm
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *EntryTask) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (r *EntryTaskValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
 	entrtask, ok := newObj.(*EntryTask)
 
 	if !ok {
@@ -96,7 +92,7 @@ func (r *EntryTask) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.O
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *EntryTask) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (r *EntryTaskValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil
