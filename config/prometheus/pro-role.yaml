@@ -27,3 +27,9 @@ rules:
     verbs: ["get", "list", "watch"]
   - nonResourceURLs: ["/metrics"]
     verbs: ["get"]
+  - apiGroups:
+      - kantetask.codereliant.io
+    resources:
+      - '*'
+    verbs:
+      - '*'
