@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus
+spec:
+  serviceAccountName: prometheus
+  serviceMonitorSelector:
+    matchLabels:
+      control-plane: controller-manager
+      app.kubernetes.io/name: entrytask-operator
+      app.kubernetes.io/managed-by: kustomize
+  resources:
+    requests:
+      memory: 400Mi
+  enableAdminAPI: false
