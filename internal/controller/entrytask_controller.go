@@ -55,9 +55,6 @@ const (
 	finalizerName = "entrytask.coderliant.io/finalizer"
 )
 
-// +kubebuilder:rbac:groups=kantetask.codereliant.io,resources=entrytasks,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kantetask.codereliant.io,resources=entrytasks/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kantetask.codereliant.io,resources=entrytasks/finalizers,verbs=update
 func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
