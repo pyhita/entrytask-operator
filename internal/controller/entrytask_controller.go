@@ -109,10 +109,10 @@ func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if controllerutil.ContainsFinalizer(entryTask, finalizerName) {
 			// clean up resources
 			log.Info("Finalizer found, clean up resources")
-			if err := r.deleteResources(ctx, entryTask); err != nil {
-				log.Error(err, "Failed to delete resources")
-				return ctrl.Result{}, err
-			}
+			//if err := r.deleteResources(ctx, entryTask); err != nil {
+			//	log.Error(err, "Failed to delete resources")
+			//	return ctrl.Result{}, err
+			//}
 
 			// remove finalizer
 			controllerutil.RemoveFinalizer(entryTask, finalizerName)
