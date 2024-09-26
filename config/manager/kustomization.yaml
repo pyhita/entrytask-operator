@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: pyhita/entrytask-operator
-  newTag: v1
+  newTag: latest
