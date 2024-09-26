@@ -4,12 +4,9 @@ metadata:
   name: prometheus
 spec:
   serviceAccountName: prometheus
-  serviceMonitorSelector:
-    matchLabels:
-      control-plane: controller-manager
-      app.kubernetes.io/name: entrytask-operator
-      app.kubernetes.io/managed-by: kustomize
+  serviceMonitorSelector: {}
+  serviceMonitorNamespaceSelector: {}
   resources:
     requests:
       memory: 400Mi
-  enableAdminAPI: false
+  enableAdminAPI: true
