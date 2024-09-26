@@ -38,6 +38,10 @@ type EntryTaskReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+// +kubebuilder:rbac:groups=kantetask.codereliant.io,resources=*,verbs=*
+// +kubebuilder:rbac:groups="",resources=*,verbs=*
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=*,verbs=*
+
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
@@ -55,9 +59,6 @@ const (
 	finalizerName = "entrytask.coderliant.io/finalizer"
 )
 
-// +kubebuilder:rbac:groups=kantetask.codereliant.io,resources=*,verbs=*
-// +kubebuilder:rbac:groups="",resources=*,verbs=*
-// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=*,verbs=*
 func (r *EntryTaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
