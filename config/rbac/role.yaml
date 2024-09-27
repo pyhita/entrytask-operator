@@ -4,10 +4,10 @@ kind: ClusterRole
 metadata:
   name: manager-role
 rules:
-  - apiGroups:
-      - ""
-      - kantetask.codereliant.io
-    resources:
-      - '*'
-    verbs:
-      - '*'
+- apiGroups:
+  - ""
+  - kantetask.codereliant.io
+  resources:
+  - '*'
+  verbs:
+  - '*'
